@@ -71,4 +71,16 @@ vectorizer = CountVectorizer()
 X = vectorizer.fit_transform(df['Name'])
 
 words = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names())
-words.sum(axis=0).sort_values(ascending=False)[0:10]
+names = words.drop(['mr', 'mrs', 'miss'], axis=1).sum(axis=0).sort_values(ascending=False)[0:20].index.tolist()
+
+df['title'] = words[['miss', 'mr', 'mrs']].idxmax(axis=1)
+df['popularName'] = words[names].idxmax(axis=1)
+    
+# survival rate for mrs and miss
+sns.countplot(y='title', hue='Survived', data=df[df['Sex']=='female'])
+plt.show()
+
+# survival rate for popular names
+sns.countplot(y='popularName', hue='Survived', data=df)
+plt.savefig('./reports/figures/names_count.png')
+plt.show()

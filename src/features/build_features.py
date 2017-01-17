@@ -29,6 +29,17 @@ def load_data(file, dummies=None):
 
   df = pd.read_csv(file, header=0)
 
+  from sklearn.feature_extraction.text import CountVectorizer
+  vectorizer = CountVectorizer()
+  X = vectorizer.fit_transform(df['Name'])
+
+  words = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names())
+  names = words.drop(['mr', 'mrs', 'miss', 'master'], axis=1).sum(axis=0).sort_values(ascending=False)[0:10].index.tolist()
+
+  df['TitleMiss'] = words['miss']
+  df['TitleMaster'] = words['master']
+  df['PopularName'] = words[names].idxmax(axis=1)
+
   df['Gender'] = df['Sex'].map( {'female': 0, 'male': 1} ).astype(int)
 
   df['Embarked'] = df['Embarked'].fillna('?')
@@ -39,8 +50,10 @@ def load_data(file, dummies=None):
   median_fare = df['Fare'].median()
   df['Fare'] = df['Fare'].fillna(median_fare)
 
+  df['CabinCat'] = df['Cabin'].fillna('').apply(lambda cabin: '?' if not cabin else cabin[0:1])
+
   if not dummies:
-    dummies = select_dummy_values(df, ['Embarked'])
+    dummies = select_dummy_values(df, ['Embarked', 'CabinCat', 'PopularName'])
 
   dummy_encode_dataframe(df, dummies)
 
